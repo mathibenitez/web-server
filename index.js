@@ -1,23 +1,18 @@
-console.clear();
-// import { createServer } from 'node:http';
+import dotenv from 'dotenv';
 import express from 'express';
+import accountRouter from './routers/account.js';
 
-const PORT = 3000;
+dotenv.config();
+
+const PORT = process.env.PORT;
 const expressApp = express();
 
 expressApp.use(express.json());
 expressApp.use(express.text());
+expressApp.use('/account', accountRouter);
 
-expressApp.post("/cuenta/:idCuenta", (req, res) => {
-console.log(req.body);
-
-    res.send("Tu cuenta personal");
+expressApp.get('/root', (req, res) => {
+  res.send(console.log('Hi'));
 })
 
-expressApp.put("/producto", (req, res) => {
-console.log(req.body);
-
-    res.send("Un producto");
-})
-
-expressApp.listen(PORT, () => console.log(`Servidor levantado en el puerto ${PORT}`));
+expressApp.listen(PORT, () => console.log(`Server up in port: ${PORT}`));
