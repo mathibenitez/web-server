@@ -1,9 +1,10 @@
-import express from 'express';
+import { Router } from 'express';
 import { USERS_BBDD } from '../bbdd.js';
 
 
-const accountRouter = express.Router();
+const accountRouter = Router();
 
+//middleware to ip log
 accountRouter.use((req, res, next) => {
   console.log(req.ip);
 
