@@ -1,9 +1,12 @@
 import { Router } from "express";
+import { SignJWT, jwtVerify } from "jose";
+import { USERS_BBDD } from "../bbdd.js";
 import authByEmailPassword from "../helpers/authByEmailPassword.js";
-import { SignJWT } from "jose";
+
+
 const authTokenRouter = Router();
 
-authTokenRouter.post("/login", (req, res) => {
+authTokenRouter.post("/login", async (req, res)  =>  {
   const { email, password } = req.body;
 
   if(!email || !password) return res.sendStatus(400);
@@ -15,35 +18,44 @@ authTokenRouter.post("/login", (req, res) => {
     const jwtConstructor = new SignJWT({ guid });
 
     //setIssuedAt = date of creation
-    const jwt = jwtConstructor
-    .setProtectedHeader({alg: 'HS256', type: 'JWT'})
+    const encoder = new TextEncoder();
+    const jwt = await jwtConstructor
+    .setProtectedHeader({alg: 'HS256', typ: 'JWT'})
     .setIssuedAt()
-    .setExpirationTime()
+    .setExpirationTime('1h')
+    .sign(encoder.encode(process.env.JWT_PRIVATE_KEY));
 
-    return res.send(`User ${user.name} authentic`);
+    return res.send(jwt);
   } catch (err) {
     return res.sendStatus(401);
   }
 })
 
 //Solicitud autenticada con sesion para obtener el perfil del usuario
-authTokenRouter.get("/profile", (req, res) => {
-  const { cookies } = req;
+authTokenRouter.get("/profile", async (req, res) => {
+  const { authorization } = req.headers;
 
-  if(!cookies.sessionId) return res.sendStatus(401);
+  if(!authorization) return res.statusCode(400);
 
-  const userSession = sessions.find((session) => session.sessionId === cookies.sessionId);
+  try {
+    
+    const encoder = new TextEncoder();
+    const { payload } = await jwtVerify(authorization, encoder.encode(process.env.JWT_PRIVATE_KEY))
+
+    const user = USERS_BBDD.find((user) => user.guid === payload.guid);
+
+    if(!user) return res.sendStatus(401);
+
+    delete user.password;
+
+    return res.send(user);
+
+  } catch (error) {
+    return res.statusCode(401);
+  }
+  //Get header token and check authentic and expire
+
   
-  console.log('hi');
-  if(!userSession) return res.sendStatus(401);
-
-  const user = USERS_BBDD.find((user) => user.guid === userSession.guid);
-
-  if(!user) return res.sendStatus(401);
-
-  delete user.password;
-
-  return res.send(user);
 })
 
 export default authTokenRouter;

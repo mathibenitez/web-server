@@ -1,10 +1,10 @@
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import express from 'express';
-import cookieParser from 'cookie-parser';
 import accountRouter from './routers/account.js';
 import authRouter from './routers/auth.js';
-import authTokenRouter from './routers/auth_token.js';
 import authSessionRouter from './routers/auth_session.js';
+import authTokenRouter from './routers/auth_token.js';
 
 dotenv.config();
 
