@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { USERS_BBDD } from '../bbdd.js';
+import userModel from '../schemas/user-schema.js';
 
 
 const accountRouter = Router();
@@ -12,55 +12,57 @@ accountRouter.use((req, res, next) => {
 })
 
 //Get details form account
-accountRouter.get('/:guid', (req, res) => {
+accountRouter.get('/:guid', async (req, res) => {
   const { guid } = req.params;
-  const user = USERS_BBDD.find(user => user.guid === guid);
+  const user = await userModel.findById(guid).exec();
 
   if(!user) return res.status(404).send();
 
   return res.send(user);
 })
+
 //Create account
-accountRouter.post('/', (req, res) => {
+accountRouter.post('/', async (req, res) => {
   const { guid, name } = req.body;
 
   if(!guid || !name) return res.state(400).send();
 
-  const user = USERS_BBDD.find((user) => user.guid === guid);
-  if(user) return res.status(409).send();
+  const user = await userModel.findById(guid).exec();
+  
+  if(user) return res.status(409).send('User already exists');
+  
+  const newUser = new userModel({_id: guid, name});
+  await newUser.save();
 
-  USERS_BBDD.push({
-    guid,
-    name
-  });
-
-  return res.send();
+  return res.send('User successfully registered');
 })
 
 //Update name of account
-accountRouter.patch('/:guid', (req, res) => {
+accountRouter.patch('/:guid', async (req, res) => {
   const { guid } = req.params;
-  const name = req.body;
+  const { name } = req.body;
 
   if(!name) return res.state(400).send();
 
-  const user = USERS_BBDD.find(user => user.guid === guid);
+  const user = await userModel.findById(guid).exec();
 
   if(!user) return res.status(404).send();
   
   user.name = name;
 
-  return res.send(user);
+  await user.save();
+
+  return res.send();
 })
 
 //Delete account
-accountRouter.delete('/:guid', (req, res) => {
+accountRouter.delete('/:guid', async (req, res) => {
   const { guid } = req.params;
-  const userIndex = USERS_BBDD.findIndex(user => user.guid === guid);
+  const user = await userModel.findById(guid).exec();
   
-  if(userIndex === -1) return res.status(404).send();
+  if(!user) return res.status(404).send();
 
-  USERS_BBDD.splice(userIndex, 1);
+  await user.deleteOne();
 
   return res.send();
 })
