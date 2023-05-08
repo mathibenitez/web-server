@@ -1,9 +1,10 @@
 import { Router } from "express";
 import authByEmailPassword from "../helpers/authByEmailPassword.js";
 import { SignJWT } from "jose";
+import validateLoginDto from "../dto/validate_login_dto.js";
 const authTokenRouter = Router();
 
-authTokenRouter.post("/login", (req, res) => {
+authTokenRouter.post("/login", validateLoginDto, (req, res) => {
   const { email, password } = req.body;
 
   if(!email || !password) return res.sendStatus(400);
